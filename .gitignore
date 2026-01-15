@@ -1,0 +1,49 @@
+# MATLAB generated files
+*.asv
+*.m~
+*.mex*
+*.mlapp
+slprj/
+*.slxc
+*.autosave
+
+# Simulink cache
+*.slxc
+slprj/
+sccprj/
+
+# Results and outputs (generated at runtime)
+results/*.png
+results/*.mp4
+results/*.avi
+results/*.fig
+
+# Data files (may be large)
+data/satellite_maps/*.tif
+data/satellite_maps/*.jpg
+data/aerial_images/*.tif
+data/aerial_images/*.jpg
+
+# Keep data folders but ignore contents
+!data/satellite_maps/.gitkeep
+!data/aerial_images/.gitkeep
+!data/test_images/.gitkeep
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+
+# IDE/Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# PDF research papers (large files)
+*.pdf
