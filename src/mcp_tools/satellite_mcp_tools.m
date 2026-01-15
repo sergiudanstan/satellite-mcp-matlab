@@ -266,12 +266,16 @@ classdef satellite_mcp_tools < handle
             end
         end
 
-        %% UAV Localization (placeholder)
-        function result = localize_uav(obj, sat_id, aerial_image, sat_image, options)
+        %% UAV Localization
+        function result = localize_uav(obj, sat_id, aerial_image, ref_database, options)
             %LOCALIZE_UAV Estimate UAV position from image matching
             %
-            %   result = tools.localize_uav(sat_id, aerial_img, sat_img)
+            %   result = tools.localize_uav(sat_id, aerial_img, ref_db)
             %   estimates UAV position using image matching algorithm.
+            %
+            %   ref_database should be a struct with:
+            %       .images    - Cell array of reference images
+            %       .locations - Mx2 matrix of [lat, lon]
 
             obj.validateSatelliteId(sat_id);
 
@@ -279,18 +283,58 @@ classdef satellite_mcp_tools < handle
                 options = struct();
             end
 
-            % Placeholder implementation
-            result.estimated_lat = 0;
-            result.estimated_lon = 0;
-            result.estimated_heading = 0;
-            result.confidence = 0;
-            result.message = 'UAV localization - placeholder implementation';
+            try
+                % Extract features from query image
+                [query_features, ~] = image_matcher(aerial_image, options);
 
-            % TODO: Implement full image matching from research paper
+                % If ref_database is provided, use it
+                if isstruct(ref_database) && isfield(ref_database, 'images')
+                    % Extract features from all reference images
+                    num_refs = length(ref_database.images);
+                    ref_features = zeros(num_refs, length(query_features));
+
+                    for i = 1:num_refs
+                        [ref_features(i, :), ~] = image_matcher(ref_database.images{i}, options);
+                    end
+
+                    % Compute similarity and find best match
+                    [~, best_match] = similarity_matrix(query_features, ref_features, ...
+                        ref_database.locations, options);
+
+                    result.estimated_lat = best_match.weighted_lat;
+                    result.estimated_lon = best_match.weighted_lon;
+                    result.confidence = best_match.confidence;
+
+                    % Estimate heading if reference image available
+                    best_ref_img = ref_database.images{best_match.index};
+                    [heading, heading_conf] = heading_estimator(aerial_image, best_ref_img, options);
+                    result.estimated_heading = heading;
+                    result.heading_confidence = heading_conf;
+
+                    result.message = 'UAV localization completed successfully';
+                    result.best_match_index = best_match.index;
+                    result.top_k = best_match.top_k_locations;
+                else
+                    % No reference database - return extracted features only
+                    result.estimated_lat = 0;
+                    result.estimated_lon = 0;
+                    result.estimated_heading = 0;
+                    result.confidence = 0;
+                    result.features = query_features;
+                    result.message = 'Features extracted. Provide reference database for localization.';
+                end
+
+            catch ME
+                result.estimated_lat = 0;
+                result.estimated_lon = 0;
+                result.estimated_heading = 0;
+                result.confidence = 0;
+                result.message = sprintf('Localization error: %s', ME.message);
+            end
         end
 
-        %% Image Enhancement (placeholder)
-        function enhanced = enhance_image(obj, image, options)
+        %% Image Enhancement
+        function [enhanced, metrics] = enhance_image(obj, image, options)
             %ENHANCE_IMAGE Apply super-resolution to satellite image
             %
             %   enhanced = tools.enhance_image(image) applies EBWT-SR
@@ -300,17 +344,8 @@ classdef satellite_mcp_tools < handle
                 options = struct();
             end
 
-            % Placeholder implementation - basic bicubic upscaling
-            scale = get_option(options, 'scale', 2);
-
-            if ischar(image)
-                % Load from file
-                image = imread(image);
-            end
-
-            enhanced = imresize(image, scale, 'bicubic');
-
-            % TODO: Implement full EBWT-SR from research paper
+            % Use EBWT-SR super-resolution
+            [enhanced, metrics] = super_resolution(image, options);
         end
     end
 
