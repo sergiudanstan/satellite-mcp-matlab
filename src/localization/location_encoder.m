@@ -95,7 +95,7 @@ function [x, y] = equal_earth_projection(lat, lon)
 
     % Compute x and y
     x = (2 * sqrt(3) * lon .* cos(theta)) ./ ...
-        (3 * (9 * A4 * theta2.^2 + 7 * A3 * theta6 ./ theta2 + 3 * A2 * theta2 + A1));
+        (3 * (9 * A4 * theta2.^4 + 7 * A3 * theta6 + 3 * A2 * theta2 + A1));
 
     y = A4 * theta.^9 + A3 * theta.^7 + A2 * theta.^3 + A1 * theta;
 end
